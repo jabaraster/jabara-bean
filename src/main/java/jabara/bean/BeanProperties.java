@@ -9,6 +9,7 @@ import jabara.general.ExceptionUtil;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,7 +21,8 @@ import java.util.Map;
 /**
  * @author jabaraster
  */
-public class BeanProperties implements Iterable<BeanProperty> {
+public class BeanProperties implements Iterable<BeanProperty>, Serializable {
+    private static final long                     serialVersionUID = -6400975116184225350L;
 
     @SuppressWarnings("synthetic-access")
     private static final Comparator<BeanProperty> ORDER_COMPARATOR = new OrderComparator();
@@ -60,6 +62,38 @@ public class BeanProperties implements Iterable<BeanProperty> {
     }
 
     /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BeanProperties other = (BeanProperties) obj;
+        if (this.name2Property == null) {
+            if (other.name2Property != null) {
+                return false;
+            }
+        } else if (!this.name2Property.equals(other.name2Property)) {
+            return false;
+        }
+        if (this.properties == null) {
+            if (other.properties != null) {
+                return false;
+            }
+        } else if (!this.properties.equals(other.properties)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @param pIndex
      * @return -
      */
@@ -80,6 +114,18 @@ public class BeanProperties implements Iterable<BeanProperty> {
             throw new IllegalArgumentException("no property for '" + propertyName + "' found."); //$NON-NLS-1$//$NON-NLS-2$
         }
         return ret;
+    }
+
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (this.name2Property == null ? 0 : this.name2Property.hashCode());
+        result = prime * result + (this.properties == null ? 0 : this.properties.hashCode());
+        return result;
     }
 
     /**

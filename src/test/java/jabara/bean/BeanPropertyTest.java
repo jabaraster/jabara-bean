@@ -5,6 +5,7 @@ package jabara.bean;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
 
 import org.junit.Test;
@@ -23,6 +24,17 @@ public class BeanPropertyTest {
         final BeanProperty sut = BeanProperties.getInstance(XTestBean.class).get("readWrite"); //$NON-NLS-1$
         assertThat(sut.isReadOnly(), is(false));
         assertThat(sut.getType().equals(String.class), is(true));
+    }
+
+    /**
+     * 
+     */
+    @SuppressWarnings({ "boxing", "static-method" })
+    @Test
+    public void _isHidden() {
+        final BeanProperties sut = BeanProperties.getInstance(XTestBean.class);
+        assertThat(sut.get("hidden").isHidden(), is(true)); //$NON-NLS-1$
+        assertThat(sut.get("readWrite").isHidden(), is(false)); //$NON-NLS-1$
     }
 
     /**
@@ -69,12 +81,21 @@ public class BeanPropertyTest {
             return null;
         }
 
+        public int getHidden() {
+            return 0;
+        }
+
         public String getNotAnnotated() {
             return null;
         }
 
         public String getReadWrite() {
             return null;
+        }
+
+        @Hidden
+        public void setHidden(final int i) {
+            System.out.println(i);
         }
 
         public void setReadWrite(final String s) {

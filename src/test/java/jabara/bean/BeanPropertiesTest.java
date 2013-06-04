@@ -5,10 +5,18 @@ package jabara.bean;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
 import jabara.bean.annotation.Order;
 import jabara.general.Empty;
+import jabara.general.ExceptionUtil;
 import jabara.general.NotFound;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -56,7 +64,8 @@ public class BeanPropertiesTest {
             assertThat(sut.get(0).getName(), is("hasNoParameter"));
             assertThat(sut.get(1).getName(), is("getterOnly"));
             assertThat(sut.get(2).getName(), is("differType"));
-            assertThat(sut.get(3).getName(), is("notOrderAnnotated"));
+            assertThat(sut.get(3).getName(), is("hidden"));
+            assertThat(sut.get(4).getName(), is("notOrderAnnotated"));
         }
 
         /**
@@ -77,7 +86,7 @@ public class BeanPropertiesTest {
         @Test
         public void _size() {
             final BeanProperties sut = new BeanProperties(XGetterOnly.class);
-            assertThat(sut.size(), is(4));
+            assertThat(sut.size(), is(5));
         }
     }
 
@@ -119,6 +128,47 @@ public class BeanPropertiesTest {
         @Test(expected = IllegalArgumentException.class)
         public void _getの引数が空文字() {
             BeanProperties.getInstance(XGetterOnly.class).get(Empty.STRING);
+        }
+    }
+
+    /**
+     * @author jabaraster
+     */
+    public static class Serializable_ {
+        /**
+         * 
+         */
+        @SuppressWarnings({ "static-method" })
+        @Test
+        public void 直列化可能であることと直列化から復元したときに情報が復元できること() {
+            final BeanProperties sut = new BeanProperties(XGetterOnly.class);
+            final BeanProperties s = deserialize(serialize(sut));
+            assertThat(s, is(sut));
+        }
+
+        private static BeanProperties deserialize(final byte[] pData) {
+            try {
+                final ByteArrayInputStream in = new ByteArrayInputStream(pData);
+                final ObjectInputStream objIn = new ObjectInputStream(in);
+                return (BeanProperties) objIn.readObject();
+
+            } catch (final Exception e) {
+                throw ExceptionUtil.rethrow(e);
+            }
+        }
+
+        private static byte[] serialize(final BeanProperties pSource) {
+            try {
+                final ByteArrayOutputStream out = new ByteArrayOutputStream();
+                final ObjectOutputStream objOut = new ObjectOutputStream(out);
+                objOut.writeObject(pSource);
+                objOut.close();
+                out.close();
+                return out.toByteArray();
+
+            } catch (final IOException e) {
+                throw ExceptionUtil.rethrow(e);
+            }
         }
     }
 
@@ -173,6 +223,12 @@ public class BeanPropertiesTest {
         @Order(30)
         public Object getHasNoParameter() {
             return null;
+        }
+
+        @Order(60)
+        @Hidden
+        public int getHidden() {
+            return 0;
         }
 
         public long getNotOrderAnnotated() {
