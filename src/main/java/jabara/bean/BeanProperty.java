@@ -35,7 +35,7 @@ public class BeanProperty implements Serializable {
      * @param pBeanType
      * @param pProperty
      */
-    public BeanProperty(final Class<?> pBeanType, final PropertyDescriptor pProperty) {
+    BeanProperty(final Class<?> pBeanType, final PropertyDescriptor pProperty) {
         ArgUtil.checkNull(pBeanType, "pBeanType"); //$NON-NLS-1$
         ArgUtil.checkNull(pProperty, "pProperty"); //$NON-NLS-1$
 

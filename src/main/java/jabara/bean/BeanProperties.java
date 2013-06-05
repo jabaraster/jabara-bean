@@ -3,6 +3,7 @@
  */
 package jabara.bean;
 
+import jabara.bean.annotation.Hidden;
 import jabara.general.ArgUtil;
 import jabara.general.ExceptionUtil;
 
@@ -27,33 +28,32 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
     @SuppressWarnings("synthetic-access")
     private static final Comparator<BeanProperty> ORDER_COMPARATOR = new OrderComparator();
 
+    private final Class<?>                        beanType;
     private final List<BeanProperty>              properties       = new ArrayList<BeanProperty>();
     private final Map<String, BeanProperty>       name2Property    = new HashMap<String, BeanProperty>();
 
     /**
-     * @param pBeanType
+     * @param pBeanType -
      */
-    public BeanProperties(final Class<?> pBeanType) {
+    BeanProperties(final Class<?> pBeanType) {
+        this(pBeanType, toBeanProperties(pBeanType));
+    }
+
+    private BeanProperties(final Class<?> pBeanType, final List<BeanProperty> pProperties) {
         ArgUtil.checkNull(pBeanType, "pBeanType"); //$NON-NLS-1$
-        try {
-            for (final PropertyDescriptor property : Introspector.getBeanInfo(pBeanType).getPropertyDescriptors()) {
-                if ("class".equals(property.getName())) { //$NON-NLS-1$
-                    continue;
-                }
-                final BeanProperty p = new BeanProperty(pBeanType, property);
-                this.properties.add(p);
-                this.name2Property.put(property.getName(), p);
-            }
+        ArgUtil.checkNull(pProperties, "pProperties"); //$NON-NLS-1$
 
-            Collections.sort(this.properties, ORDER_COMPARATOR);
-
-        } catch (final IntrospectionException e) {
-            throw ExceptionUtil.rethrow(e);
+        this.beanType = pBeanType;
+        this.properties.addAll(pProperties);
+        for (final BeanProperty property : pProperties) {
+            this.name2Property.put(property.getName(), property);
         }
+
+        Collections.sort(this.properties, ORDER_COMPARATOR);
     }
 
     /**
-     * @param pPropertyName
+     * @param pPropertyName -
      * @return 指定のプロパティが存在するならtrue.
      */
     public boolean contains(final String pPropertyName) {
@@ -94,7 +94,7 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
     }
 
     /**
-     * @param pIndex
+     * @param pIndex -
      * @return -
      */
     public BeanProperty get(final int pIndex) {
@@ -102,7 +102,7 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
     }
 
     /**
-     * @param pPropertyName
+     * @param pPropertyName -
      * @return -
      */
     public BeanProperty get(final String pPropertyName) {
@@ -144,7 +144,20 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
     }
 
     /**
-     * @param pBeanType
+     * @return {@link Hidden}アノテーションが付与されていないプロパティのみ抽出した、新たな{@link BeanProperties}を返します.
+     */
+    public BeanProperties toVisiblePropertiesOnly() {
+        final List<BeanProperty> visibleProperties = new ArrayList<BeanProperty>();
+        for (final BeanProperty property : this.properties) {
+            if (!property.isHidden()) {
+                visibleProperties.add(property);
+            }
+        }
+        return new BeanProperties(this.beanType, visibleProperties);
+    }
+
+    /**
+     * @param pBeanType -
      * @return -
      */
     public static BeanProperties getInstance(final Class<?> pBeanType) {
@@ -157,6 +170,23 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
             return Character.toLowerCase(pPropertyName.charAt(0)) + pPropertyName.substring(1);
         }
         return pPropertyName;
+    }
+
+    private static List<BeanProperty> toBeanProperties(final Class<?> pBeanType) {
+        try {
+            final List<BeanProperty> ret = new ArrayList<BeanProperty>();
+            for (final PropertyDescriptor property : Introspector.getBeanInfo(pBeanType).getPropertyDescriptors()) {
+                if ("class".equals(property.getName())) { //$NON-NLS-1$
+                    continue;
+                }
+                final BeanProperty p = new BeanProperty(pBeanType, property);
+                ret.add(p);
+            }
+            return ret;
+
+        } catch (final IntrospectionException e) {
+            throw ExceptionUtil.rethrow(e);
+        }
     }
 
     private static class OrderComparator implements Comparator<BeanProperty> {
