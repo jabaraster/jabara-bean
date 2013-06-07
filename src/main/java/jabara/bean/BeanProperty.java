@@ -24,6 +24,7 @@ public class BeanProperty implements Serializable {
 
     private static final int  DEFAULT_ORDER_INDEX = Integer.MAX_VALUE;
 
+    private final Class<?>    beanType;
     private final boolean     readOnly;
     private final String      name;
     private final String      localizedName;
@@ -42,6 +43,7 @@ public class BeanProperty implements Serializable {
         final Method getter = pProperty.getReadMethod();
         final Method setter = pProperty.getWriteMethod();
 
+        this.beanType = pBeanType;
         this.readOnly = getter != null && setter == null;
         this.name = pProperty.getName();
         this.localizedName = getLocalizedNameS(pBeanType, getter, setter, this.name);
@@ -96,6 +98,13 @@ public class BeanProperty implements Serializable {
             return false;
         }
         return true;
+    }
+
+    /**
+     * @return このプロパティを持っているクラス.
+     */
+    public Class<?> getBeanType() {
+        return this.beanType;
     }
 
     /**
