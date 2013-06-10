@@ -144,6 +144,13 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
     }
 
     /**
+     * @return -
+     */
+    public List<BeanProperty> toList() {
+        return new ArrayList<BeanProperty>(this.properties);
+    }
+
+    /**
      * @return {@link Hidden}アノテーションが付与されていないプロパティのみ抽出した、新たな{@link BeanProperties}を返します.
      */
     public BeanProperties toVisiblePropertiesOnly() {
