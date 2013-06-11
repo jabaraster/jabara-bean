@@ -68,6 +68,25 @@ public class BeanPropertyTest {
         assertThat(sut.getLocalizedName(), is("文字列")); //$NON-NLS-1$
     }
 
+    /**
+     * 
+     */
+    @SuppressWarnings({ "boxing", "static-method" })
+    @Test
+    public void _継承したクラスboolean型プロパティのHiddenアノテーションが有効() {
+        final BeanProperty sut = BeanProperties.getInstance(XExTestBean.class).get("boolean"); //$NON-NLS-1$
+        assertThat(sut.isHidden(), is(true));
+    }
+
+    @SuppressWarnings("javadoc")
+    public static class XExTestBean extends XTestBean {
+        @Override
+        @Hidden
+        public boolean isBoolean() {
+            return super.isBoolean();
+        }
+    }
+
     @SuppressWarnings({ "static-method", "javadoc" })
     public static class XTestBean {
 
@@ -93,6 +112,10 @@ public class BeanPropertyTest {
             return null;
         }
 
+        public boolean isBoolean() {
+            return true;
+        }
+
         @Hidden
         public void setHidden(final int i) {
             System.out.println(i);
@@ -102,5 +125,4 @@ public class BeanPropertyTest {
             System.out.println(s);
         }
     }
-
 }

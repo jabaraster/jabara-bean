@@ -7,6 +7,7 @@ import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
 import jabara.bean.annotation.Order;
 import jabara.general.ArgUtil;
+import jabara.general.ExceptionUtil;
 import jabara.general.NotFound;
 
 import java.beans.PropertyDescriptor;
@@ -40,7 +41,7 @@ public class BeanProperty implements Serializable {
         ArgUtil.checkNull(pBeanType, "pBeanType"); //$NON-NLS-1$
         ArgUtil.checkNull(pProperty, "pProperty"); //$NON-NLS-1$
 
-        final Method getter = pProperty.getReadMethod();
+        final Method getter = getGetter(pBeanType, pProperty);
         final Method setter = pProperty.getWriteMethod();
 
         this.beanType = pBeanType;
@@ -173,6 +174,25 @@ public class BeanProperty implements Serializable {
     public String toString() {
         return "BeanProperty [readOnly=" + this.readOnly + ", name=" + this.name + ", localizedName=" + this.localizedName + ", type=" + this.type
                 + ", orderIndex=" + this.orderIndex + ", hidden=" + this.hidden + "]";
+    }
+
+    private static Method getGetter(final Class<?> pBeanType, final PropertyDescriptor pProperty) {
+        final Method getter = pProperty.getReadMethod();
+        if (getter == null) {
+            return null;
+        }
+        if (!getter.getReturnType().equals(Boolean.TYPE)) {
+            return getter;
+        }
+        // boolean型のプロパティをオーバーライドしているケースでは
+        // なぜか親クラスで定義されたメソッドしか取得出来ず、
+        // オーバーライドしたメソッドに付与したアノテーションが取得出来ない.
+        // これは困るので、メソッドを取得しなおす.
+        try {
+            return pBeanType.getMethod(getter.getName(), getter.getParameterTypes());
+        } catch (final NoSuchMethodException e) {
+            throw ExceptionUtil.rethrow(e);
+        }
     }
 
     private static boolean getHiddenS(final Method pGetter, final Method pSetter) {
