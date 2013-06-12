@@ -3,12 +3,14 @@
  */
 package jabara.bean;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
 import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
 
 import org.junit.Test;
+
+import static org.junit.Assert.assertThat;
+
+import static org.hamcrest.CoreMatchers.is;
 
 /**
  * @author jabaraster
@@ -73,7 +75,7 @@ public class BeanPropertyTest {
      */
     @SuppressWarnings({ "boxing", "static-method" })
     @Test
-    public void _継承したクラスboolean型プロパティのHiddenアノテーションが有効() {
+    public void _サブクラスでオーバーライドしたboolean型プロパティのアノテーションが有効() {
         final BeanProperty sut = BeanProperties.getInstance(XExTestBean.class).get("boolean"); //$NON-NLS-1$
         assertThat(sut.isHidden(), is(true));
     }
