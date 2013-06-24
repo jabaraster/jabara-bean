@@ -5,6 +5,7 @@ package jabara.bean;
 
 import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
+import jabara.bean.annotation.MultiLine;
 import jabara.bean.annotation.Order;
 import jabara.general.ArgUtil;
 import jabara.general.ExceptionUtil;
@@ -32,6 +33,7 @@ public class BeanProperty implements Serializable {
     private final Class<?>    type;
     private final int         orderIndex;
     private final boolean     hidden;
+    private final boolean     multiLine;
 
     /**
      * @param pBeanType
@@ -51,6 +53,7 @@ public class BeanProperty implements Serializable {
         this.orderIndex = getOrderIndexS(getter, setter);
         this.type = pProperty.getPropertyType();
         this.hidden = getHiddenS(getter, setter);
+        this.multiLine = getMultiLineS(this.type, getter, setter);
     }
 
     /**
@@ -160,6 +163,13 @@ public class BeanProperty implements Serializable {
     }
 
     /**
+     * @return multiLineを返す.
+     */
+    public boolean isMultiLine() {
+        return this.multiLine;
+    }
+
+    /**
      * @return getterのみのプロパティの場合true.
      */
     public boolean isReadOnly() {
@@ -172,8 +182,9 @@ public class BeanProperty implements Serializable {
     @SuppressWarnings("nls")
     @Override
     public String toString() {
-        return "BeanProperty [readOnly=" + this.readOnly + ", name=" + this.name + ", localizedName=" + this.localizedName + ", type=" + this.type
-                + ", orderIndex=" + this.orderIndex + ", hidden=" + this.hidden + "]";
+        return "BeanProperty [beanType=" + this.beanType + ", readOnly=" + this.readOnly + ", name=" + this.name + ", localizedName="
+                + this.localizedName + ", type=" + this.type + ", orderIndex=" + this.orderIndex + ", hidden=" + this.hidden + ", multiLine="
+                + this.multiLine + "]";
     }
 
     private static Method getGetter(final Class<?> pBeanType, final PropertyDescriptor pProperty) {
@@ -237,6 +248,18 @@ public class BeanProperty implements Serializable {
             }
         }
         throw NotFound.GLOBAL;
+    }
+
+    private static boolean getMultiLineS(final Class<?> pPropertyType, final Method pGetter, final Method pSetter) {
+        if (!String.class.equals(pPropertyType)) {
+            return false;
+        }
+        try {
+            getMethodsAnnotation(MultiLine.class, pGetter, pSetter);
+            return true;
+        } catch (final NotFound e) {
+            return false;
+        }
     }
 
     private static String getNameFromResource(final Class<?> pBeanType, final String pKey) throws NotFound {

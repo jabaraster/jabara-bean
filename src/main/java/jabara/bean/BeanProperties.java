@@ -200,7 +200,13 @@ public class BeanProperties implements Iterable<BeanProperty>, Serializable {
 
         @Override
         public int compare(final BeanProperty p0, final BeanProperty p1) {
-            return p0.getOrderIndex() - p1.getOrderIndex();
+            if (p0.getOrderIndex() < p1.getOrderIndex()) {
+                return -1;
+            }
+            if (p0.getOrderIndex() > p1.getOrderIndex()) {
+                return 1;
+            }
+            return 0;
         }
 
     }
