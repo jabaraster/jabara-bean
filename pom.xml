@@ -55,4 +55,11 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <!-- 河野作成ライブラリのリポジトリ -->
+        <repository>
+            <id>jabaraster's repository</id>
+            <url>http://jabaraster.github.io/maven/</url>
+        </repository>
+    </repositories>
 </project>
