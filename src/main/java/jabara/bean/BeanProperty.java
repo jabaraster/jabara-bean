@@ -6,9 +6,11 @@ package jabara.bean;
 import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
 import jabara.bean.annotation.MultiLine;
+import jabara.bean.annotation.Nullable;
 import jabara.bean.annotation.Order;
 import jabara.general.ArgUtil;
 import jabara.general.ExceptionUtil;
+import jabara.general.MethodKey;
 import jabara.general.NotFound;
 
 import java.beans.PropertyDescriptor;
@@ -26,6 +28,9 @@ public class BeanProperty implements Serializable {
 
     private static final int  DEFAULT_ORDER_INDEX = Integer.MAX_VALUE;
 
+    private final MethodKey   getterKey;
+    private final MethodKey   setterKey;
+
     private final Class<?>    beanType;
     private final boolean     readOnly;
     private final String      name;
@@ -34,6 +39,10 @@ public class BeanProperty implements Serializable {
     private final int         orderIndex;
     private final boolean     hidden;
     private final boolean     multiLine;
+    private final boolean     nullable;
+
+    private transient Method  getter;
+    private transient Method  setter;
 
     /**
      * @param pBeanType
@@ -43,17 +52,21 @@ public class BeanProperty implements Serializable {
         ArgUtil.checkNull(pBeanType, "pBeanType"); //$NON-NLS-1$
         ArgUtil.checkNull(pProperty, "pProperty"); //$NON-NLS-1$
 
-        final Method getter = getGetter(pBeanType, pProperty);
-        final Method setter = pProperty.getWriteMethod();
+        this.getter = getGetter(pBeanType, pProperty);
+        this.setter = pProperty.getWriteMethod();
+
+        this.getterKey = new MethodKey(this.getter);
+        this.setterKey = new MethodKey(this.setter);
 
         this.beanType = pBeanType;
-        this.readOnly = getter != null && setter == null;
+        this.readOnly = this.getter != null && this.setter == null;
         this.name = pProperty.getName();
-        this.localizedName = getLocalizedNameS(pBeanType, getter, setter, this.name);
-        this.orderIndex = getOrderIndexS(getter, setter);
+        this.localizedName = getLocalizedNameS(pBeanType, this.getter, this.setter, this.name);
+        this.orderIndex = getOrderIndexS(this.getter, this.setter);
         this.type = pProperty.getPropertyType();
-        this.hidden = getHiddenS(getter, setter);
-        this.multiLine = getMultiLineS(this.type, getter, setter);
+        this.hidden = getHiddenS(this.getter, this.setter);
+        this.multiLine = getMultiLineS(this.type, this.getter, this.setter);
+        this.nullable = getNullableS(this.getter, this.setter);
     }
 
     /**
@@ -71,6 +84,20 @@ public class BeanProperty implements Serializable {
             return false;
         }
         final BeanProperty other = (BeanProperty) obj;
+        if (this.beanType == null) {
+            if (other.beanType != null) {
+                return false;
+            }
+        } else if (!this.beanType.equals(other.beanType)) {
+            return false;
+        }
+        if (this.getterKey == null) {
+            if (other.getterKey != null) {
+                return false;
+            }
+        } else if (!this.getterKey.equals(other.getterKey)) {
+            return false;
+        }
         if (this.hidden != other.hidden) {
             return false;
         }
@@ -81,6 +108,9 @@ public class BeanProperty implements Serializable {
         } else if (!this.localizedName.equals(other.localizedName)) {
             return false;
         }
+        if (this.multiLine != other.multiLine) {
+            return false;
+        }
         if (this.name == null) {
             if (other.name != null) {
                 return false;
@@ -88,10 +118,20 @@ public class BeanProperty implements Serializable {
         } else if (!this.name.equals(other.name)) {
             return false;
         }
+        if (this.nullable != other.nullable) {
+            return false;
+        }
         if (this.orderIndex != other.orderIndex) {
             return false;
         }
         if (this.readOnly != other.readOnly) {
+            return false;
+        }
+        if (this.setterKey == null) {
+            if (other.setterKey != null) {
+                return false;
+            }
+        } else if (!this.setterKey.equals(other.setterKey)) {
             return false;
         }
         if (this.type == null) {
@@ -102,6 +142,20 @@ public class BeanProperty implements Serializable {
             return false;
         }
         return true;
+    }
+
+    /**
+     * getterあるいはsetterにアノテーションAが付与されていれば返します. <br>
+     * 両方共に付与されていない場合は{@link NotFound}がスローされます. <br>
+     * 両方に付与されている場合はgetterに付与されているものが優先して返されます. <br>
+     * 
+     * @param pType -
+     * @return -
+     * @param <A> 取得するアノテーションの型.
+     * @throws NotFound 指定のアノテーションが付与されていない場合.
+     */
+    public <A extends Annotation> A getAnnocation(final Class<A> pType) throws NotFound {
+        return getMethodsAnnotation(pType, this.getter, this.setter);
     }
 
     /**
@@ -146,11 +200,16 @@ public class BeanProperty implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (this.beanType == null ? 0 : this.beanType.hashCode());
+        result = prime * result + (this.getterKey == null ? 0 : this.getterKey.hashCode());
         result = prime * result + (this.hidden ? 1231 : 1237);
         result = prime * result + (this.localizedName == null ? 0 : this.localizedName.hashCode());
+        result = prime * result + (this.multiLine ? 1231 : 1237);
         result = prime * result + (this.name == null ? 0 : this.name.hashCode());
+        result = prime * result + (this.nullable ? 1231 : 1237);
         result = prime * result + this.orderIndex;
         result = prime * result + (this.readOnly ? 1231 : 1237);
+        result = prime * result + (this.setterKey == null ? 0 : this.setterKey.hashCode());
         result = prime * result + (this.type == null ? 0 : this.type.hashCode());
         return result;
     }
@@ -170,6 +229,13 @@ public class BeanProperty implements Serializable {
     }
 
     /**
+     * @return nullableを返す.
+     */
+    public boolean isNullable() {
+        return this.nullable;
+    }
+
+    /**
      * @return getterのみのプロパティの場合true.
      */
     public boolean isReadOnly() {
@@ -184,7 +250,22 @@ public class BeanProperty implements Serializable {
     public String toString() {
         return "BeanProperty [beanType=" + this.beanType + ", readOnly=" + this.readOnly + ", name=" + this.name + ", localizedName="
                 + this.localizedName + ", type=" + this.type + ", orderIndex=" + this.orderIndex + ", hidden=" + this.hidden + ", multiLine="
-                + this.multiLine + "]";
+                + this.multiLine + ", nullable=" + this.nullable + "]";
+    }
+
+    private Object readResolve() {
+        try {
+            this.getter = this.getterKey.get(this.beanType);
+        } catch (final NotFound e) {
+            this.getter = null;
+        }
+        try {
+            this.setter = this.setterKey.get(this.beanType);
+        } catch (final NotFound e) {
+            this.setter = null;
+        }
+
+        return this;
     }
 
     private static Method getGetter(final Class<?> pBeanType, final PropertyDescriptor pProperty) {
@@ -268,6 +349,15 @@ public class BeanProperty implements Serializable {
             return resources.getString(pKey);
         } catch (final MissingResourceException e) {
             throw NotFound.GLOBAL;
+        }
+    }
+
+    private static boolean getNullableS(final Method pGetter, final Method pSetter) {
+        try {
+            getMethodsAnnotation(Nullable.class, pGetter, pSetter);
+            return true;
+        } catch (final NotFound e) {
+            return false;
         }
     }
 

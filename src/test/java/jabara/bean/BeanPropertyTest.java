@@ -3,14 +3,18 @@
  */
 package jabara.bean;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import jabara.bean.annotation.Hidden;
 import jabara.bean.annotation.Localized;
+import jabara.general.ExceptionUtil;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import org.junit.Test;
-
-import static org.junit.Assert.assertThat;
-
-import static org.hamcrest.CoreMatchers.is;
 
 /**
  * @author jabaraster
@@ -73,11 +77,38 @@ public class BeanPropertyTest {
     /**
      * 
      */
+    @SuppressWarnings({ "static-method", "boxing" })
+    @Test
+    public void _serializable() {
+        final String propertyName = "notAnnotated"; //$NON-NLS-1$
+        final BeanProperty sut = BeanProperties.getInstance(XTestBean.class).get(propertyName);
+        final BeanProperty exp = serialize(sut);
+        assertThat(sut.equals(exp), is(true));
+    }
+
+    /**
+     * 
+     */
     @SuppressWarnings({ "boxing", "static-method" })
     @Test
     public void _サブクラスでオーバーライドしたboolean型プロパティのアノテーションが有効() {
         final BeanProperty sut = BeanProperties.getInstance(XExTestBean.class).get("boolean"); //$NON-NLS-1$
         assertThat(sut.isHidden(), is(true));
+    }
+
+    private static BeanProperty serialize(final BeanProperty pProperty) {
+        try {
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final ObjectOutputStream objOut = new ObjectOutputStream(out);
+
+            objOut.writeObject(pProperty);
+            objOut.close();
+
+            return (BeanProperty) new ObjectInputStream(new ByteArrayInputStream(out.toByteArray())).readObject();
+
+        } catch (final Exception e) {
+            throw ExceptionUtil.rethrow(e);
+        }
     }
 
     @SuppressWarnings("javadoc")
