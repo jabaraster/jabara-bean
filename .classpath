@@ -3,16 +3,12 @@
 	<classpathentry kind="src" output="target/test-classes" path="src/test/java"/>
 	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar" sourcepath="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1-sources.jar"/>
-	<classpathentry kind="var" path="M2_REPO/jabaraster/jabara-general/1.2/jabara-general-1.2.jar" sourcepath="M2_REPO/jabaraster/jabara-general/1.2/jabara-general-1.2-sources.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/Users/jabaraster/.m2/repository/jabaraster/jabara-general/1.2/jabara-general-1.2-javadoc.jar!/"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="var" path="M2_REPO/junit/junit/4.10/junit-4.10.jar" sourcepath="M2_REPO/junit/junit/4.10/junit-4.10-sources.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/Users/jabaraster/.m2/repository/junit/junit/4.10/junit-4.10-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/jabara-general"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
